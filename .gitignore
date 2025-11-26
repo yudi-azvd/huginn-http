@@ -288,15 +288,18 @@ shared/
 
 *.sublime-workspace
 examples/bug/
-build.sh
 !core/debug/
 
 # RAD debugger project file
+# RAD debugger project file
 *.raddbg
-
+*.rdi
+tests/issues/build/*
 misc/featuregen/featuregen
 
 
 ###
 
 server
+main
+raven
