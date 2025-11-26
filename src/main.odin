@@ -3,6 +3,5 @@ package main
 import "core:fmt"
 
 main :: proc() {
-    fmt.printfln("Hello Raven!")
-
+	fmt.printfln("Hello Raven!")
 }
