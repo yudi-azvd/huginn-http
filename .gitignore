@@ -299,7 +299,7 @@ misc/featuregen/featuregen
 
 
 ###
-
+*.out
 server
 main
 raven

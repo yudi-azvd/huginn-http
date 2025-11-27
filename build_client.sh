@@ -2,4 +2,3 @@
 set -e
 
 odin build examples/client/ -file -debug -out:client.out
-odin build examples/basic/ -file -debug -out:basic.out

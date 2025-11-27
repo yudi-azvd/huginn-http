@@ -7,27 +7,5 @@
 	"enable_hover": true,
 	"enable_snippets": true,
 	"profile": "default",
-	"odin_command": "~/Odin/odin",
-	"profiles": [
-		{
-			"name": "default",
-			"checker_path": [
-				"src"
-			]
-		},
-		{
-			"name": "linux_profile",
-			"os": "linux",
-			"checker_path": [
-				"src/main.odin"
-			]
-		},
-		{
-			"name": "windows_profile",
-			"os": "windows",
-			"checker_path": [
-				"src"
-			]
-		}
-	]
+	"odin_command": "~/Odin/odin"
 }
