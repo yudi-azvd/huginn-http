@@ -50,14 +50,6 @@ DEFAULT_RAVEN_SERVER := Raven_Server {
 	port       = 8080,
 }
 
-init :: proc(s: Raven_Server) {
-	fmt.println("Init Raven")
-}
-
-
-generic_response := `HTTP/1.0 200 OK\r
-`
-
 run :: proc(s: ^Raven_Server) {
 	posix.signal(.SIGQUIT, proc "c" (s: posix.Signal) {
 		context = runtime.default_context()
@@ -105,14 +97,8 @@ _handle_client :: proc(s: ^Raven_Server, client: net.TCP_Socket, src: net.Endpoi
 	} else {
 		request_str := string(recv_buffer[:bytes_read])
 		assert(bytes_read < 1024) // FIXME: temporário
-		// fmt.printfln("")
-		// fmt.printfln("client: %v", net.endpoint_to_string(src))
-		// fmt.printfln("read  %v bytes", bytes_read)
-		// fmt.printfln("--- request content: ---\n%v", request_str)
 		req := _parse_http_request(request_str)
-
 		res_headers := map[string]string{}
-
 		handler := s.routes[req.uri]
 		if handler == nil {
 			fmt.printfln("WARNING: Did not find handler for %v", req.uri)
@@ -122,12 +108,11 @@ _handle_client :: proc(s: ^Raven_Server, client: net.TCP_Socket, src: net.Endpoi
 			send_err: net.TCP_Send_Error = nil
 
 			res := Response{}
-			handler(&req, &res)
+			// USER CODE
+			res = handler(&req, &res)^ // Redundante kkk
+			// USER CODE
 
 			res_str := transmute(string)res.buffer[:res.buffer_len]
-			fmt.printfln("res_str        : %v", res_str)
-			// fmt.printfln("response buffer: %v", final_str)
-			// fmt.printfln("response buffer len: %v", res.buffer_len)
 
 			res_headers["Content-Type"] = "text/html"
 
@@ -143,7 +128,6 @@ _handle_client :: proc(s: ^Raven_Server, client: net.TCP_Socket, src: net.Endpoi
 			fmt.printfln("%v", final_string)
 			fmt.printfln("-------------------------------------------------")
 			final_buffer := transmute([]u8)final_string
-			// fmt.printfln("final string: %v", final_string)
 			written, send_err = net.send_tcp(client, final_buffer)
 			if send_err != nil {
 				fmt.eprintfln("Error sending bytes: %v", send_err)
@@ -245,4 +229,21 @@ add_route :: proc(using s: ^Raven_Server, route: string, handler: Route_Handler)
 	// 	fmt.printfln("Warning: ")
 	// }
 	routes[route] = handler
+}
+
+get :: proc(using s: ^Raven_Server, route: string, handler: Route_Handler) {
+	method :: string("GET")
+	b := strings.Builder{}
+	entry := fmt.sbprint(&b, "%s %s", method, route)
+
+	add_route(s, entry, handler)
+}
+
+
+post :: proc(using s: ^Raven_Server, route: string, handler: Route_Handler) {
+	method :: string("POST")
+	b := strings.Builder{}
+	entry := fmt.sbprint(&b, "%s %s", method, route)
+
+	add_route(s, entry, handler)
 }
