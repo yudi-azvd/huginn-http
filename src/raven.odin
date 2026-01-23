@@ -234,7 +234,7 @@ add_route :: proc(using s: ^Raven_Server, route: string, handler: Route_Handler)
 get :: proc(using s: ^Raven_Server, route: string, handler: Route_Handler) {
 	method :: string("GET")
 	b := strings.Builder{}
-	entry := fmt.sbprint(&b, "%s %s", method, route)
+	entry := fmt.sbprintf(&b, "%s %s", method, route)
 
 	add_route(s, entry, handler)
 }
@@ -243,7 +243,7 @@ get :: proc(using s: ^Raven_Server, route: string, handler: Route_Handler) {
 post :: proc(using s: ^Raven_Server, route: string, handler: Route_Handler) {
 	method :: string("POST")
 	b := strings.Builder{}
-	entry := fmt.sbprint(&b, "%s %s", method, route)
+	entry := fmt.sbprintf(&b, "%s %s", method, route)
 
 	add_route(s, entry, handler)
 }
