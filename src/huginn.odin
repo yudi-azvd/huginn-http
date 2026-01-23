@@ -11,7 +11,7 @@ import "core:sys/posix"
 import os "core:os/os2"
 
 
-Raven_Server :: struct {
+Huginn_Server :: struct {
 	address:    string,
 	port:       int,
 	max_memory: int,
@@ -45,12 +45,12 @@ Response :: struct {
 }
 
 
-DEFAULT_RAVEN_SERVER := Raven_Server {
+DEFAULT_RAVEN_SERVER := Huginn_Server {
 	max_memory = 4 * mem.Megabyte,
 	port       = 8080,
 }
 
-run :: proc(s: ^Raven_Server) {
+run :: proc(s: ^Huginn_Server) {
 	posix.signal(.SIGQUIT, proc "c" (s: posix.Signal) {
 		context = runtime.default_context()
 		fmt.printfln("Shutting down")
@@ -89,7 +89,7 @@ run :: proc(s: ^Raven_Server) {
 }
 
 @(private = "file")
-_handle_client :: proc(s: ^Raven_Server, client: net.TCP_Socket, src: net.Endpoint) {
+_handle_client :: proc(s: ^Huginn_Server, client: net.TCP_Socket, src: net.Endpoint) {
 	recv_buffer := [1024]u8{}
 	bytes_read, read_err := net.recv_tcp(client, recv_buffer[:])
 	if read_err != nil {
@@ -222,7 +222,7 @@ _parse_request_line :: proc(req: ^Request, request_line: string) -> (ok: bool) {
 
 Route_Handler :: #type proc(req: ^Request, res: ^Response) -> ^Response
 
-add_route :: proc(using s: ^Raven_Server, route: string, handler: Route_Handler) {
+add_route :: proc(using s: ^Huginn_Server, route: string, handler: Route_Handler) {
 	r, found := routes[route]
 	// Tem problema mais de um handler por rota?
 	// if found {
@@ -231,7 +231,7 @@ add_route :: proc(using s: ^Raven_Server, route: string, handler: Route_Handler)
 	routes[route] = handler
 }
 
-get :: proc(using s: ^Raven_Server, route: string, handler: Route_Handler) {
+get :: proc(using s: ^Huginn_Server, route: string, handler: Route_Handler) {
 	method :: string("GET")
 	b := strings.Builder{}
 	entry := fmt.sbprintf(&b, "%s %s", method, route)
@@ -240,7 +240,7 @@ get :: proc(using s: ^Raven_Server, route: string, handler: Route_Handler) {
 }
 
 
-post :: proc(using s: ^Raven_Server, route: string, handler: Route_Handler) {
+post :: proc(using s: ^Huginn_Server, route: string, handler: Route_Handler) {
 	method :: string("POST")
 	b := strings.Builder{}
 	entry := fmt.sbprintf(&b, "%s %s", method, route)

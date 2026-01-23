@@ -4,21 +4,20 @@ import "core:fmt"
 import "core:mem"
 import "core:strings"
 
-import rv "../../src"
-
+import hu "../../src"
 
 main :: proc() {
 	fmt.printfln("Hello Raven")
 
-	server := rv.DEFAULT_RAVEN_SERVER
+	server := hu.DEFAULT_RAVEN_SERVER
 	server.max_memory = 4 * mem.Megabyte
 	server.address = "127.0.0.1"
 	server.port = 8080
 
-	rv.add_route(
+	hu.add_route(
 		&server,
 		"/",
-		proc(req: ^rv.Request, res: ^rv.Response) -> ^rv.Response {
+		proc(req: ^hu.Request, res: ^hu.Response) -> ^hu.Response {
 			msg := "hello from / handler"
 			// fmt.printfln(msg)
 			mem.copy(&res.buffer, raw_data(msg), len(msg))
@@ -28,7 +27,7 @@ main :: proc() {
 		},
 	)
 
-	rv.add_route(&server, "/oi", proc(req: ^rv.Request, res: ^rv.Response) -> ^rv.Response {
+	hu.add_route(&server, "/oi", proc(req: ^hu.Request, res: ^hu.Response) -> ^hu.Response {
 		msg := "++++ hello from /oi handler......."
 		mem.copy(&res.buffer, raw_data(msg), len(msg))
 		res.buffer_len = len(msg)
@@ -36,9 +35,9 @@ main :: proc() {
 		return res
 	})
 
-	rv.get(&server, "/ootra-rota", proc(req: ^rv.Request, res: ^rv.Response) -> ^rv.Response {
+	hu.get(&server, "/ootra-rota", proc(req: ^hu.Request, res: ^hu.Response) -> ^hu.Response {
 		return res
 	})
 
-	rv.run(&server)
+	hu.run(&server)
 }
