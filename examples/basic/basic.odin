@@ -3,7 +3,7 @@ package example_basic
 import "core:fmt"
 import "core:mem"
 
-import hu "../../"
+import hu "../../huginn"
 
 main :: proc() {
 	fmt.printfln("Hello Huginn")
