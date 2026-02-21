@@ -90,13 +90,13 @@ run :: proc(s: ^Huginn_Server) {
 
 Route_Handler :: #type proc(req: ^Request, res: ^Response) -> ^Response
 
-add_route :: proc(using s: ^Huginn_Server, route: string, handler: Route_Handler) {
-	r, found := routes[route]
+add_route :: proc(s: ^Huginn_Server, route: string, handler: Route_Handler) {
+	r, found := s.routes[route]
 	// Tem problema mais de um handler por rota?
 	// if found {
 	// 	fmt.printfln("Warning: ")
 	// }
-	routes[route] = handler
+	s.routes[route] = handler
 }
 
 @(private = "package")
@@ -250,7 +250,7 @@ _parse_request_line :: proc(req: ^Request, request_line: string) -> (ok: bool) {
 }
 
 
-get :: proc(using s: ^Huginn_Server, route: string, handler: Route_Handler) {
+get :: proc(s: ^Huginn_Server, route: string, handler: Route_Handler) {
 	method :: string("GET")
 	b := strings.Builder{}
 	entry := fmt.sbprintf(&b, "%s %s", method, route)
@@ -259,7 +259,7 @@ get :: proc(using s: ^Huginn_Server, route: string, handler: Route_Handler) {
 }
 
 
-post :: proc(using s: ^Huginn_Server, route: string, handler: Route_Handler) {
+post :: proc(s: ^Huginn_Server, route: string, handler: Route_Handler) {
 	method :: string("POST")
 	b := strings.Builder{}
 	entry := fmt.sbprintf(&b, "%s %s", method, route)
@@ -267,7 +267,7 @@ post :: proc(using s: ^Huginn_Server, route: string, handler: Route_Handler) {
 	add_route(s, entry, handler)
 }
 
-put :: proc(using s: ^Huginn_Server, route: string, handler: Route_Handler) {
+put :: proc(s: ^Huginn_Server, route: string, handler: Route_Handler) {
 	method :: string("PUT")
 	b := strings.Builder{}
 	entry := fmt.sbprintf(&b, "%s %s", method, route)
