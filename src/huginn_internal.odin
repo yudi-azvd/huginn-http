@@ -1,4 +1,4 @@
-package main
+package huginn_internal
 
 import "base:runtime"
 import "core:fmt"
@@ -45,7 +45,7 @@ Response :: struct {
 }
 
 
-DEFAULT_RAVEN_SERVER := Huginn_Server {
+DEFAULT_HUGINN_SERVER := Huginn_Server {
 	max_memory = 4 * mem.Megabyte,
 	port       = 8080,
 }
@@ -88,7 +88,18 @@ run :: proc(s: ^Huginn_Server) {
 	}
 }
 
-@(private = "file")
+Route_Handler :: #type proc(req: ^Request, res: ^Response) -> ^Response
+
+add_route :: proc(using s: ^Huginn_Server, route: string, handler: Route_Handler) {
+	r, found := routes[route]
+	// Tem problema mais de um handler por rota?
+	// if found {
+	// 	fmt.printfln("Warning: ")
+	// }
+	routes[route] = handler
+}
+
+@(private = "package")
 _handle_client :: proc(s: ^Huginn_Server, client: net.TCP_Socket, src: net.Endpoint) {
 	recv_buffer := [1024]u8{}
 	bytes_read, read_err := net.recv_tcp(client, recv_buffer[:])
@@ -99,13 +110,26 @@ _handle_client :: proc(s: ^Huginn_Server, client: net.TCP_Socket, src: net.Endpo
 		assert(bytes_read < 1024) // FIXME: temporário
 		req := _parse_http_request(request_str)
 		res_headers := map[string]string{}
-		handler := s.routes[req.uri]
+		/* FIXME: O correto é iterar os Route_Handler testando o req.uri contra
+		pattern de s.routes:
+		for rou in s.routes {
+			if match(rou, req.uri) {
+				handler := s.routes[req.uri]
+			}
+		} */
+		handler := Route_Handler{}
+		for rou in s.routes {
+			fmt.printfln("rou = %v", rou)
+			if _match(rou, req.uri) {
+				handler = s.routes[req.uri]
+			}
+		}
 		if handler == nil {
 			fmt.printfln("WARNING: Did not find handler for %v", req.uri)
 			// TODO: responder 404 ou algo parecido
 		} else {
 			written := 0
-			send_err: net.TCP_Send_Error = nil
+			send_err: net.TCP_Send_Error = .None
 
 			res := Response{}
 			// USER CODE
@@ -133,13 +157,18 @@ _handle_client :: proc(s: ^Huginn_Server, client: net.TCP_Socket, src: net.Endpo
 				fmt.eprintfln("Error sending bytes: %v", send_err)
 			}
 		}
-
 	}
 	net.close(client)
 }
 
-@(private = "file")
-_parse_http_request :: proc(req: string) -> Request { 	// ->(Request, Parse_Http_Request_Error)
+@(private = "package")
+_match :: proc(pattern: string, route: string) -> bool {
+	return true
+}
+
+@(private = "package")
+//                                       -> (Request, Parse_Http_Request_Error) {
+_parse_http_request :: proc(req: string) -> Request {
 	request := Request{}
 	offset := 0
 	str := req
@@ -174,7 +203,7 @@ _parse_http_request :: proc(req: string) -> Request { 	// ->(Request, Parse_Http
 	return request
 }
 
-@(private = "file")
+@(private = "package")
 _consume_line :: proc(str: string, offset: int) -> (line: string, new_offset: int) {
 	s := str[offset:]
 	index := strings.index(s, "\r\n")
@@ -188,7 +217,7 @@ _consume_line :: proc(str: string, offset: int) -> (line: string, new_offset: in
 	return line, new_offset
 }
 
-@(private = "file")
+@(private = "package")
 _build_http_reponse :: proc(
 	 /* vai virar res: Response */s: string,
 ) -> []u8 {
@@ -196,7 +225,7 @@ _build_http_reponse :: proc(
 	return response
 }
 
-@(private = "file")
+@(private = "package")
 _parse_request_line :: proc(req: ^Request, request_line: string) -> (ok: bool) {
 	uri_idx := strings.index(request_line, " /") // TODO: nem sempre, pode ser * também
 	assert(uri_idx > 0)
@@ -220,16 +249,6 @@ _parse_request_line :: proc(req: ^Request, request_line: string) -> (ok: bool) {
 	return true
 }
 
-Route_Handler :: #type proc(req: ^Request, res: ^Response) -> ^Response
-
-add_route :: proc(using s: ^Huginn_Server, route: string, handler: Route_Handler) {
-	r, found := routes[route]
-	// Tem problema mais de um handler por rota?
-	// if found {
-	// 	fmt.printfln("Warning: ")
-	// }
-	routes[route] = handler
-}
 
 get :: proc(using s: ^Huginn_Server, route: string, handler: Route_Handler) {
 	method :: string("GET")
@@ -242,6 +261,14 @@ get :: proc(using s: ^Huginn_Server, route: string, handler: Route_Handler) {
 
 post :: proc(using s: ^Huginn_Server, route: string, handler: Route_Handler) {
 	method :: string("POST")
+	b := strings.Builder{}
+	entry := fmt.sbprintf(&b, "%s %s", method, route)
+
+	add_route(s, entry, handler)
+}
+
+put :: proc(using s: ^Huginn_Server, route: string, handler: Route_Handler) {
+	method :: string("PUT")
 	b := strings.Builder{}
 	entry := fmt.sbprintf(&b, "%s %s", method, route)
 
